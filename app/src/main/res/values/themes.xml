@@ -1,0 +1,10 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.MeusBoletos" parent="Theme.Material3.DayNight.NoActionBar">
+    </style>
+
+    <style name="Theme.MeusBoletos" parent="Base.Theme.MeusBoletos" />
+
+    <style name="Theme.MeusBoletos.AppBarOverlay" parent="ThemeOverlay.Material3.Dark.ActionBar" />
+    <style name="Theme.MeusBoletos.PopupOverlay" parent="ThemeOverlay.Material3.Light" />
+
+</resources>
