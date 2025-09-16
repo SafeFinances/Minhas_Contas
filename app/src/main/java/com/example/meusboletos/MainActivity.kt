@@ -2,6 +2,7 @@ package com.example.meusboletos
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,17 +10,18 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.meusboletos.databinding.ActivityMainBinding
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.DateTimeFormatter
+import org.threeten.bp.format.DateTimeParseException
 
-// MainActivity agora "assina o contrato" (implementa a interface)
 class MainActivity : AppCompatActivity(), BoletoAdapterListener {
 
     private lateinit var binding: ActivityMainBinding
     private val listaDeBoletos = mutableListOf<Boleto>()
     private lateinit var adapter: BoletoAdapter
+    private var positionParaEditar: Int = -1 // NOVO: Guarda a posição do item sendo editado
 
+    // Launcher para Adicionar Boleto (código que já tínhamos)
     private val addBoletoLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -42,6 +44,26 @@ class MainActivity : AppCompatActivity(), BoletoAdapterListener {
         }
     }
 
+    // NOVO LAUNCHER: Para receber o resultado da tela de Edição
+    private val editBoletoLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val boletoEditado = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data?.getSerializableExtra("EXTRA_BOLEto_EDITADO", Boleto::class.java)
+            } else {
+                result.data?.getSerializableExtra("EXTRA_BOLETO_EDITADO") as Boleto?
+            }
+
+            if (boletoEditado != null && positionParaEditar != -1) {
+                listaDeBoletos[positionParaEditar] = boletoEditado
+                adapter.notifyItemChanged(positionParaEditar)
+                Toast.makeText(this, "Boleto atualizado!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -62,11 +84,39 @@ class MainActivity : AppCompatActivity(), BoletoAdapterListener {
     }
 
     private fun adicionarDadosIniciais() {
-        // Boleto recorrente
-        listaDeBoletos.add(Boleto(nome = "Conta de Luz", valor = "R$ 150,00", dataVencimento = "18/10/2025", recorrente = true))
-        // Boleto não recorrente
-        listaDeBoletos.add(Boleto(nome = "Compra Online", valor = "R$ 350,00", dataVencimento = "25/10/2025", recorrente = false))
+        listaDeBoletos.add(
+            Boleto(
+                nome = "Conta de Luz",
+                valor = "150,00",
+                dataVencimento = "18/10/2025",
+                recorrente = true
+            )
+        )
+        listaDeBoletos.add(
+            Boleto(
+                nome = "Compra Online",
+                valor = "350,00",
+                dataVencimento = "25/10/2025",
+                recorrente = false
+            )
+        )
         adapter.notifyDataSetChanged()
+    }
+
+    // --- FUNÇÕES DO CONTRATO (BoletoAdapterListener) ---
+
+    // NOVA FUNÇÃO: Chamada quando o usuário clica no item da lista
+    override fun onItemClick(position: Int) {
+        positionParaEditar = position // Guarda a posição do item clicado
+        val boletoParaEditar = listaDeBoletos[position]
+
+        // Cria a intenção de abrir a tela de edição
+        val intent = Intent(this, EditBoletoActivity::class.java)
+        // Coloca o boleto inteiro dentro da intenção para a outra tela receber
+        intent.putExtra("EXTRA_BOLETO", boletoParaEditar)
+
+        // Lança a tela de edição esperando um resultado de volta
+        editBoletoLauncher.launch(intent)
     }
 
     override fun onExcluirClick(position: Int) {
@@ -84,9 +134,7 @@ class MainActivity : AppCompatActivity(), BoletoAdapterListener {
             .show()
     }
 
-    // A MÁGICA ACONTECE AQUI!
     override fun onPagoClick(position: Int, isChecked: Boolean) {
-        // Só executa a lógica se o usuário MARCOU como pago.
         if (!isChecked) {
             listaDeBoletos[position].pago = false
             return
@@ -96,43 +144,44 @@ class MainActivity : AppCompatActivity(), BoletoAdapterListener {
         boleto.pago = true
 
         if (boleto.recorrente) {
-            // LÓGICA PARA BOLETO RECORRENTE
             try {
-                // Converte o texto da data para um objeto de data real
                 val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
                 val dataAtual = LocalDate.parse(boleto.dataVencimento, formatter)
-
-                // Adiciona um mês
                 val novaData = dataAtual.plusMonths(1)
 
-                // Atualiza o boleto com a nova data e desmarca como pago
                 boleto.dataVencimento = novaData.format(formatter)
-                boleto.pago = false // Prepara para o próximo mês
-
-                // Notifica o adapter que este item mudou, para redesenhar na tela
+                boleto.pago = false
                 adapter.notifyItemChanged(position)
-                Toast.makeText(this, "'${boleto.nome}' pago! Próximo vencimento em ${boleto.dataVencimento}.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "'${boleto.nome}' pago! Próximo vencimento em ${boleto.dataVencimento}.",
+                    Toast.LENGTH_LONG
+                ).show()
 
             } catch (e: DateTimeParseException) {
-                // Se o formato da data estiver errado, mostra um erro
-                Toast.makeText(this, "Formato de data inválido. Use dd/MM/yyyy.", Toast.LENGTH_SHORT).show()
-                boleto.pago = false // Desfaz a marcação
+                Toast.makeText(
+                    this,
+                    "Formato de data inválido. Use dd/MM/yyyy.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                boleto.pago = false
                 adapter.notifyItemChanged(position)
             }
-
         } else {
-            // LÓGICA PARA BOLETO NÃO RECORRENTE
-            // Mostra um pop-up perguntando se quer apagar o boleto pago.
             AlertDialog.Builder(this)
                 .setTitle("Boleto Pago")
                 .setMessage("Este boleto não é recorrente. Deseja removê-lo da lista?")
                 .setPositiveButton("Sim, remover") { _, _ ->
-                    // Reutiliza a função de excluir que já criamos!
-                    onExcluirClick(position)
+                    // CORREÇÃO APLICADA AQUI
+                    listaDeBoletos.removeAt(position)
+                    adapter.notifyItemRemoved(position)
+                    Toast.makeText(this, "Boleto removido!", Toast.LENGTH_SHORT).show()
                 }
                 .setNegativeButton("Não, manter na lista") { _, _ ->
-                    // Não faz nada, apenas deixa o boleto marcado como pago.
+                    boleto.pago = false
+                    adapter.notifyItemChanged(position)
                 }
+                .setCancelable(false)
                 .show()
         }
     }

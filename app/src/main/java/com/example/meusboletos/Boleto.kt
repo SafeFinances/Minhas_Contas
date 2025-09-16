@@ -9,4 +9,4 @@ data class Boleto(
     var dataVencimento: String, // MUDANÇA FEITA AQUI
     var pago: Boolean = false,
     val recorrente: Boolean = false
-)
+): java.io.Serializable

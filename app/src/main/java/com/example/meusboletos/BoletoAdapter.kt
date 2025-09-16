@@ -8,18 +8,17 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-// O "contrato" para comunicar cliques para a MainActivity
 interface BoletoAdapterListener {
     fun onExcluirClick(position: Int)
     fun onPagoClick(position: Int, isChecked: Boolean)
+    fun onItemClick(position: Int)
 }
 
 class BoletoAdapter(
     private val boletos: List<Boleto>,
-    private val listener: BoletoAdapterListener // O Adapter agora precisa de um "ouvinte"
+    private val listener: BoletoAdapterListener
 ) : RecyclerView.Adapter<BoletoAdapter.BoletoViewHolder>() {
 
-    // O ViewHolder agora conhece todos os botões e textos
     class BoletoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nomeBoleto: TextView = itemView.findViewById(R.id.textViewNomeBoleto)
         val dataVencimento: TextView = itemView.findViewById(R.id.textViewDataVencimento)
@@ -36,16 +35,33 @@ class BoletoAdapter(
         val boleto = boletos[position]
         holder.nomeBoleto.text = boleto.nome
         holder.dataVencimento.text = "Vence em: ${boleto.dataVencimento}"
+
+        // Remove o listener antigo para evitar múltiplos cliques
+        holder.checkBoxPago.setOnCheckedChangeListener(null)
         holder.checkBoxPago.isChecked = boleto.pago
 
-        // Ação para o botão de excluir
+        // --- MUDANÇA PRINCIPAL AQUI ---
+        // Agora usamos holder.adapterPosition, que é sempre a posição atual.
+
         holder.buttonExcluir.setOnClickListener {
-            listener.onExcluirClick(position)
+            val currentPosition = holder.adapterPosition
+            if (currentPosition != RecyclerView.NO_POSITION) {
+                listener.onExcluirClick(currentPosition)
+            }
         }
 
-        // Ação para o checkbox de pago
         holder.checkBoxPago.setOnCheckedChangeListener { _, isChecked ->
-            listener.onPagoClick(position, isChecked)
+            val currentPosition = holder.adapterPosition
+            if (currentPosition != RecyclerView.NO_POSITION) {
+                listener.onPagoClick(currentPosition, isChecked)
+            }
+        }
+
+        holder.itemView.setOnClickListener {
+            val currentPosition = holder.adapterPosition
+            if (currentPosition != RecyclerView.NO_POSITION) {
+                listener.onItemClick(currentPosition)
+            }
         }
     }
 

@@ -9,6 +9,23 @@ import com.example.meusboletos.databinding.ActivityAddBoletoBinding
 
 class AddBoletoActivity : AppCompatActivity() {
 
+    private fun setupDatePicker() {
+        binding.editTextData.setOnClickListener {
+            val c = java.util.Calendar.getInstance()
+            val year = c.get(java.util.Calendar.YEAR)
+            val month = c.get(java.util.Calendar.MONTH)
+            val day = c.get(java.util.Calendar.DAY_OF_MONTH)
+
+            val dpd = android.app.DatePickerDialog(this, { _, year, monthOfYear, dayOfMonth ->
+                // Formata a data para dd/MM/yyyy
+                val selectedDate = "${String.format("%02d", dayOfMonth)}/${String.format("%02d", monthOfYear + 1)}/$year"
+                binding.editTextData.setText(selectedDate)
+            }, year, month, day)
+
+            dpd.show()
+        }
+    }
+
     private lateinit var binding: ActivityAddBoletoBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +37,9 @@ class AddBoletoActivity : AppCompatActivity() {
         binding.buttonSalvar.setOnClickListener {
             salvarBoleto()
         }
+
+        setupDatePicker()
+        binding.editTextValor.addTextChangedListener(MoneyTextWatcher(binding.editTextValor))
     }
 
     private fun salvarBoleto() {
