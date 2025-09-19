@@ -19,7 +19,6 @@ class EditBoletoActivity : AppCompatActivity() {
         binding = ActivityEditBoletoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Recebe o boleto da MainActivity
         boletoOriginal = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getSerializableExtra("EXTRA_BOLETO", Boleto::class.java)
         } else {
@@ -27,20 +26,17 @@ class EditBoletoActivity : AppCompatActivity() {
             intent.getSerializableExtra("EXTRA_BOLETO") as Boleto?
         }
 
-        // Preenche os campos com os dados recebidos
-        boletoOriginal?.let {
-            binding.editTextNome.setText(it.nome)
-            binding.editTextValor.setText(it.valor)
-            binding.editTextData.setText(it.dataVencimento)
+        boletoOriginal?.let { boleto ->
+            binding.editTextNome.setText(boleto.nome)
+            binding.editTextData.setText(boleto.dataVencimento)
+            binding.editTextAntecedencia.setText(boleto.diasAntecedenciaNotificacao.toString())
         }
 
         binding.buttonSalvar.setOnClickListener {
             salvarAlteracoes()
         }
 
-        // --- NOVAS FUNÇÕES ADICIONADAS ---
         setupDatePicker()
-        binding.editTextValor.addTextChangedListener(MoneyTextWatcher(binding.editTextValor))
     }
 
     private fun setupDatePicker() {
@@ -61,14 +57,13 @@ class EditBoletoActivity : AppCompatActivity() {
 
     private fun salvarAlteracoes() {
         val nomeEditado = binding.editTextNome.text.toString()
-        val valorEditado = binding.editTextValor.text.toString()
         val dataEditada = binding.editTextData.text.toString()
+        val antecedenciaEditada = binding.editTextAntecedencia.text.toString().toIntOrNull() ?: 1
 
-        // Cria um novo boleto com os dados atualizados, mantendo o ID e outros campos
         val boletoEditado = boletoOriginal?.copy(
             nome = nomeEditado,
-            valor = valorEditado,
-            dataVencimento = dataEditada
+            dataVencimento = dataEditada,
+            diasAntecedenciaNotificacao = antecedenciaEditada
         )
 
         val resultIntent = Intent()
