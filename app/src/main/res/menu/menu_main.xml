@@ -1,18 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.meusboletos.MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_remover_anuncios"
+        android:title="Remover Anúncios"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="Settings"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_remove_ads"
-        android:title="Remover Anúncios"
-        android:orderInCategory="90"
-        app:showAsAction="never" />
+        android:id="@+id/action_overflow"
+        android:icon="@drawable/ic_more_vert_white_24dp"
+        android:title="Mais opções"
+        app:showAsAction="always"
+        android:visible="false" />
 
 </menu>

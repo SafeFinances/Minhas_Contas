@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.threetenabp)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.lifecycle.process)
+    implementation("com.android.billingclient:billing-ktx:6.0.1")
 
     // Room
     implementation(libs.androidx.room.runtime)

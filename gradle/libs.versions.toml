@@ -1,5 +1,5 @@
 [versions]
-agp = "8.3.0" # Use uma versão estável
+agp = "8.13.2" # Use uma versão estável
 kotlin = "1.9.10" # Sincronizado com a versão do KSP
 ksp = "1.9.10-1.0.13"
 coreKtx = "1.10.1"
